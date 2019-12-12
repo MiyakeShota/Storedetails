@@ -10,10 +10,13 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.google.android.material.tabs.TabLayout;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 
 public class MainActivity extends AppCompatActivity {
@@ -33,6 +36,17 @@ public class MainActivity extends AppCompatActivity {
         TextView textView5 = findViewById(R.id.textView10);
         TextView textView6 = findViewById(R.id.textView11);
         TextView textView7 = findViewById(R.id.textView9);
+
+        ImageView imageView = findViewById(R.id.imageView);
+        ImageView imageView1 = findViewById(R.id.imageView2);
+        ImageView imageView2 = findViewById(R.id.imageView3);
+        ImageView imageView3 = findViewById(R.id.imageView4);
+        ImageView imageView4 = findViewById(R.id.imageView5);
+        ImageView imageView5 = findViewById(R.id.imageView6);
+        ImageView imageView6 = findViewById(R.id.imageView7);
+        ImageView imageView7 = findViewById(R.id.imageView8);
+
+        List<ImageView> list = Arrays.asList(imageView,imageView1,imageView2,imageView3,imageView4,imageView5,imageView6,imageView7);
 
         Database2 db = new Database2("stores");
 //        db.get("HnSRrPY3aSNRc37Cwcp8", "name",textView);
