@@ -1,24 +1,31 @@
 package jp.ac.ecc.se2a28.storedetails;
 
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.viewpager.widget.PagerAdapter;
-import androidx.viewpager.widget.ViewPager;
 
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.google.android.material.tabs.TabLayout;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 
 public class MainActivity extends AppCompatActivity {
 
+    //コンテキスト
     Context context = this;
+
+    //Log.d用
+    private static final String TAG = "FavoriteActivity";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -90,6 +97,5 @@ public class MainActivity extends AppCompatActivity {
                 startActivity(intent);
             }
         });
-
-        }
+    }
 }

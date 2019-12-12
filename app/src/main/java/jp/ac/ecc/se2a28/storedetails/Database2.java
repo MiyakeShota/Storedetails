@@ -3,10 +3,12 @@ package jp.ac.ecc.se2a28.storedetails;
 import android.content.Context;
 import android.os.Handler;
 import android.util.Log;
+import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
@@ -22,6 +24,7 @@ import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.QuerySnapshot;
 import com.google.firebase.firestore.SetOptions;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -709,4 +712,200 @@ public class Database2 {
             }
         });
     }
+
+    //順番
+    //1:写真          店名、テキスト、日時
+    //2:アイコン      性 名
+    //3: 店名
+    public void new10(final Context context, final List<TextView> timelist, final List<TextView> storenamelist, final List<TextView> textlist,
+                      final List<ImageView> imglist, final List<TextView> firstnamelist, final List<TextView> lastnamelist, final List<ImageView> iconlist) {
+
+        //投稿日時が新しい順で10件問い合わせる
+        colRef.orderBy("time", Query.Direction.DESCENDING).limit(10).get().addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
+            int count;
+            int photocount = -1;
+
+            @Override
+            public void onComplete(@NonNull Task<QuerySnapshot> task) {
+                if (task.isSuccessful()) {
+                    for (final QueryDocumentSnapshot document : task.getResult()) {
+                        //日時
+                        Log.d(TAG, document.get("good") + " => " + new SimpleDateFormat("yyyy/MM/dd").format(document.getTimestamp("time").toDate()));
+                        timelist.get(count).setText(new SimpleDateFormat("yyyy/MM/dd").format(document.getTimestamp("time").toDate()));
+
+                        //テキスト
+                        Log.d(TAG, "テキスト:" + document.get("text").toString());
+                        textlist.get(count).setText(document.get("text").toString());
+
+                        //写真
+                        List<String> photolist = (List<String>) document.get("photolist");
+                        for(int i = 0; i < 2; i++) {
+                            try {
+                                photocount++;
+                                Log.d(TAG, "画像:" + photolist.get(i));
+                                GlideApp.with(context).load(photolist.get(i)).into(imglist.get(photocount));
+                            } catch (NullPointerException | IndexOutOfBoundsException e) {
+                                imglist.get(photocount).setVisibility(View.GONE);
+                            }
+                        }
+
+                        //何番目の処理か分かるようにする変数
+                        final int num = count;
+//
+                        //アイコンと名前
+                        db.collection("users").document(document.get("poster").toString()).get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
+                            @Override
+                            public void onComplete(@NonNull Task<DocumentSnapshot> task) {
+                                if (task.isSuccessful()) {
+                                    DocumentSnapshot d= task.getResult();
+                                    if (d.exists()) {
+                                        Log.d(TAG, "名前:" + d.get("firstname").toString() + d.get("lastname").toString());
+                                        Log.d(TAG, "アイコン:" + d.get("icon"));
+                                        firstnamelist.get(num).setText(d.get("firstname").toString());
+                                        lastnamelist.get(num).setText(d.get("lastname").toString());
+                                        GlideApp.with(context).load(d.get("icon")).circleCrop().into(iconlist.get(num));
+                                    } else {
+                                        Log.d(TAG, "そのような文書はありません");
+                                    }
+                                } else {
+                                    Log.d(TAG, "失敗する ", task.getException());
+                                }
+                            }
+                        });
+
+                        //店名
+                        db.collection("stores").document(document.get("store").toString()).get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
+                            @Override
+                            public void onComplete(@NonNull Task<DocumentSnapshot> task) {
+                                if (task.isSuccessful()) {
+                                    DocumentSnapshot d= task.getResult();
+                                    if (d.exists()) {
+                                        Log.d(TAG, "店名:" + d.get("name").toString());
+                                        storenamelist.get(num).setText(d.get("name").toString());
+                                    } else {
+                                        Log.d(TAG, "そのような文書はありません");
+                                    }
+                                } else {
+                                    Log.d(TAG, "失敗する ", task.getException());
+                                }
+                            }
+                        });
+
+                        count++;
+                    }
+                } else {
+                    Log.d(TAG, "ドキュメントの取得エラー： ", task.getException());
+                }
+            }
+        });
+    }
+
+     //1.店名, 昼予算、　夜予算
+    //2.写真
+    public void search(final Context context, final String searchText, final String searchGenre, final List<TextView> storeNameList, final List<ImageView> imgList) {
+        db.collection("stores").get().addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
+            int count;
+
+            @Override
+            public void onComplete(@NonNull Task<QuerySnapshot> task) {
+                if (task.isSuccessful()) {
+                    for (final QueryDocumentSnapshot document : task.getResult()) {
+                        if(document.get("name").toString().contains(searchText) && document.get("genre").toString().contains(searchGenre)) {
+                            //店名
+                             storeNameList.get(count).setText(document.get("name").toString());
+                             String storeId = document.getId();
+
+                            final int photocount= count * 2;
+                            //写真
+                            db.collection("comments").whereEqualTo("store", document.getId()).get()
+                                    .addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
+
+
+                                        @Override
+                                        public void onComplete(@NonNull Task<QuerySnapshot> task) {
+                                            if (task.isSuccessful()) {
+                                                for (QueryDocumentSnapshot document : task.getResult()) {
+                                                    List<String> photolist = (List<String>) document.get("photolist");
+                                                    for(int i = 0; i < 2; i++) {
+                                                        try {
+                                                            GlideApp.with(context).load(photolist.get(i)).into(imgList.get(photocount + i));
+                                                        } catch (NullPointerException | IndexOutOfBoundsException e) {
+                                                            imgList.get(photocount + i).setVisibility(View.GONE);
+                                                        }
+
+                                                    }
+                                                }
+                                            } else {
+                                                Log.d(TAG, "Error getting documents: ", task.getException());
+                                            }
+                                        }
+                                    });
+                            count++;
+
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+//    public void favorite(String currentUserDocumentPath, final RecyclerView rv) {
+//
+//        //ユーザー表へ問い合わせ
+//        db.collection("users").document(currentUserDocumentPath).get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
+//            int count;
+//
+//            @Override
+//            public void onComplete(@NonNull Task<DocumentSnapshot> task) {
+//                final DocumentSnapshot documentSnapshot = task.getResult();
+//                final List<String> favorites = (ArrayList<String>)documentSnapshot.get("favoritelist");
+//
+//                final List<String> storeNames = new ArrayList<>();
+//                final List<String> images = new ArrayList<>();
+//                final List<String> dinnerBudgets = new ArrayList<>();
+//                final List<String> lunchBudgets = new ArrayList<>();
+//                final List<String> genres = new ArrayList<>();
+//
+//                //お気に入りリストの数だけお店表へ問い合わせ
+//                //???????????????????????????????????????   お気に入り0のときエラー吐きそう
+//                //??????????????????????????? 店の写真をコメントから持ってくるのめんどくさい
+//                for(final String storeDocumentPath: favorites) {
+//
+//                    db.collection("stores").document(storeDocumentPath).get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
+//
+//                        @Override
+//                        public void onComplete(@NonNull Task<DocumentSnapshot> task) {
+//                            DocumentSnapshot documentSnapshot1 = task.getResult();
+//
+//                            storeNames.add(documentSnapshot1.get("name").toString());
+//                            lunchBudgets.add(documentSnapshot1.get("lunch budget").toString());
+//                            dinnerBudgets.add(documentSnapshot1.get("dinner budget").toString());
+//                            genres.add(documentSnapshot1.get("genre").toString());
+//
+//                            counter++;
+//
+//                            //コメント表への問い合わせめんどくさい
+////                            db.collection("comments").whereEqualTo("store", storeDocumentPath).limit(1).get().addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
+////                                @Override
+////                                public void onComplete(@NonNull Task<QuerySnapshot> task) {
+////                                    for(DocumentSnapshot documentSnapshot2: task.getResult()) {
+////                                        //???????????????????????????????          写真ないときどうするねん
+////                                        List<String> photolist = (List<String>)documentSnapshot2.get("photolist");
+////                                        images.add(photolist.get(0));
+////                                        break;
+////                                    }
+////                                }
+////                            });
+//
+//                            if(favorites.size() == counter) {
+//                                MyAdapter1 adapter = new MyAdapter1(storeNames, images, lunchBudgets, dinnerBudgets, genres);
+//                                rv.setAdapter(adapter);
+//                                counter = 0;
+//                            }
+//                        }
+//                    });
+//                }
+//            }
+//        });
+//    }
 }
