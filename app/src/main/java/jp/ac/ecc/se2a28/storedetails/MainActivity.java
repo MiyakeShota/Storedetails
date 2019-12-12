@@ -7,6 +7,7 @@ import androidx.viewpager.widget.ViewPager;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageButton;
@@ -21,7 +22,11 @@ import java.util.Map;
 
 public class MainActivity extends AppCompatActivity {
 
+    //コンテキスト
     Context context = this;
+
+    //Log.d用
+    private static final String TAG = "FavoriteActivity";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
